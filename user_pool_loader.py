@@ -20,11 +20,16 @@ def load_user_pool(file_path: str) -> list[UserProfile]:
         data = json.load(f)
         # 遍历每个用户的数据
         for user_data in data['users']:
+            # 获取性别倾向列表，如果是字符串则转换为单元素列表
+            gender_pref = user_data.get('性别倾向', '不限')
+            if isinstance(gender_pref, str):
+                gender_pref = [gender_pref]
+            
             # 创建UserProfile对象,使用get()方法安全地获取数据,并提供默认值
             user = UserProfile(
                 games=[user_data.get('游戏', '')],  # 游戏列表,目前只支持一个游戏
                 gender=user_data.get('性别', '不限'),  # 性别
-                gender_preference=user_data.get('性别倾向', '不限'),  # 性别倾向
+                gender_preference=gender_pref,  # 性别倾向列表
                 play_region=user_data.get('游玩服务器', ''),  # 游戏服务器
                 play_time=user_data.get('游玩固定时间', ''),  # 固定游戏时间
                 mbti=user_data.get('MBTI', '未知'),  # MBTI性格类型
