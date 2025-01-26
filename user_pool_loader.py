@@ -34,7 +34,10 @@ def load_user_pool(file_path: str) -> list[UserProfile]:
                 play_time=user_data.get('游玩固定时间', ''),  # 固定游戏时间
                 mbti=user_data.get('MBTI', '未知'),  # MBTI性格类型
                 zodiac=user_data.get('星座', '未知'),  # 星座
-                game_experience=user_data.get('游戏经验', '初级')  # 游戏经验水平
+                game_experience=user_data.get('游戏经验', '初级'),  # 游戏经验水平
+                online_status=user_data.get('在线状态', '离线'),  # 在线状态
+                game_style=user_data.get('游戏风格', '保守'),  # 游戏风格
+                user_id=user_data.get('id', '')  # 用户ID
             )
             users.append(user)
     
@@ -47,15 +50,17 @@ def print_user_info(user: UserProfile, user_id: str):
         user: UserProfile对象,包含用户的所有属性
         user_id: 用户的唯一标识符
     """
-    print(f"\n用户ID: {user_id}")
-    print(f"游戏: {user.games[0]}")
-    print(f"性别: {user.gender}")
-    print(f"性别倾向: {user.gender_preference}")
-    print(f"游玩服务器: {user.play_region}")
-    print(f"游玩时间: {user.play_time}")
-    print(f"MBTI: {user.mbti}")
-    print(f"星座: {user.zodiac}")
-    print(f"游戏经验: {user.game_experience}")
+    print(f"\n用户ID: {user_id}")  # ID永远放在最前面
+    print(f"游戏: {user.games[0]}")  # 1. 游戏
+    print(f"性别: {user.gender}")  # 2. 性别
+    print(f"性别倾向: {user.gender_preference}")  # 3. 性别倾向
+    print(f"游玩服务器: {user.play_region}")  # 4. 游玩服务器
+    print(f"在线状态: {user.online_status}")  # 5. 在线状态
+    print(f"游玩时间: {user.play_time}")  # 6. 游玩时间
+    print(f"MBTI: {user.mbti}")  # 7. MBTI
+    print(f"星座: {user.zodiac}")  # 8. 星座
+    print(f"游戏风格: {user.game_style}")  # 9. 游戏风格
+    print(f"游戏经验: {user.game_experience}")  # 10. 游戏经验
     print("-" * 30)
 
 # 当直接运行此文件时执行以下代码
