@@ -2,24 +2,24 @@
 from user_pool_loader import load_user_pool  # 用于加载用户池数据
 from recommendation_system import UserMatchingSystem, UserProfile  # 用于用户匹配系统和用户档案
 import pandas as pd  # 用于数据处理和保存CSV
-from typing import List, Tuple  # 用于类型提示
+from typing import List, Tuple, Dict  # 用于类型提示
 import json  # 用于JSON文件处理
 
-def save_matching_results(matches: List[Tuple[UserProfile, float]], target_user: UserProfile, output_file: str):
+def save_matching_results(matches: List[Tuple[UserProfile, float, Dict[str, float]]], target_user: UserProfile, output_file: str):
     """保存匹配结果到CSV文件
     
     Args:
-        matches: 匹配结果列表,每个元素是(用户档案,相似度)的元组
+        matches: 匹配结果列表,每个元素是(用户档案,相似度,贡献度)的元组
         target_user: 目标用户的档案
         output_file: 输出CSV文件的路径
     """
     results = []
-    for user, similarity in matches:
+    for user, similarity, _ in matches:  # 忽略贡献度信息
         # 构建每一行的数据字典
         result = {
             '目标用户游戏': ','.join(target_user.games),  # 将游戏列表转换为逗号分隔的字符串
             '目标用户性别': target_user.gender,
-            '目标用户性别倾向': target_user.gender_preference,
+            '目标用户性别倾向': ','.join(target_user.gender_preference),  # 将列表转换为字符串
             '目标用户游玩区服': target_user.play_region,
             '目标用户游玩时间': target_user.play_time,
             '目标用户MBTI': target_user.mbti,
@@ -27,7 +27,7 @@ def save_matching_results(matches: List[Tuple[UserProfile, float]], target_user:
             '目标用户游戏经验': target_user.game_experience,
             '匹配用户游戏': ','.join(user.games),
             '匹配用户性别': user.gender,
-            '匹配用户性别倾向': user.gender_preference,
+            '匹配用户性别倾向': ','.join(user.gender_preference),  # 将列表转换为字符串
             '匹配用户游玩区服': user.play_region,
             '匹配用户游玩时间': user.play_time,
             '匹配用户MBTI': user.mbti,
@@ -46,12 +46,14 @@ def print_user_info(user: UserProfile, title: str = "用户信息"):
     print(f"\n{title}:")
     print(f"游戏: {', '.join(user.games)}")
     print(f"性别: {user.gender}")
-    print(f"性别倾向: {user.gender_preference}")
+    print(f"性别倾向: {', '.join(user.gender_preference)}")  # 将列表转换为逗号分隔的字符串
     print(f"游玩区服: {user.play_region}")
     print(f"游玩时间: {user.play_time}")
     print(f"MBTI: {user.mbti}")
     print(f"星座: {user.zodiac}")
     print(f"游戏经验: {user.game_experience}")
+    print(f"在线状态: {user.online_status}")
+    print(f"游戏风格: {user.game_style}")
 
 def main():
     # 1. 加载用户池数据
@@ -92,7 +94,7 @@ def main():
             # 打印所有匹配用户信息（从最匹配到最不匹配）
             print("\n所有用户匹配结果（按匹配度从高到低排序）：")
             print("=" * 50)
-            for i, (matched_user, similarity) in enumerate(matches, 1):
+            for i, (matched_user, similarity, _) in enumerate(matches, 1):  # 忽略贡献度信息
                 print(f"\n第{i}名匹配用户 (匹配度: {similarity:.2%})")
                 print("-" * 30)
                 print_user_info(matched_user)

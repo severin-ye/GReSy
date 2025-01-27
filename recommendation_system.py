@@ -45,7 +45,7 @@ class UserMatchingSystem:
         self.debug_mode = debug_mode  # 添加调试模式标志
         # 定义各特征在匹配计算中的权重（总和为1）
         self.feature_weights = {
-            'games': 0.35,              # 游戏偏好权重
+            'games': 0.8,              # 游戏偏好权重
             'gender': 0.20,             # 性别特征权重
             'play_region': 0.15,        # 游戏区服权重
             'play_time': 0.10,          # 游戏时间权重
@@ -78,18 +78,17 @@ class UserMatchingSystem:
         user_dicts = [user.to_dict() for user in self.users]
         df = pd.DataFrame(user_dicts)
         
-        # 修改编码方式，处理特殊情况
+        # 对每个分类特征进行编码
         for feature, encoder in self.label_encoders.items():
             if feature in df.columns:
-                unique_values = len(set(df[feature]))
-                if unique_values == 1:
-                    # 如果所有值都相同，则编码为1
-                    df[feature] = 1.0
+                # 如果所有值都相同，则编码为1
+                if len(df[feature].unique()) == 1:
+                    df[feature] = 1
                 else:
-                    # 否则使用0到1之间的均匀分布值
-                    df[feature] = encoder.fit_transform(df[feature]) / (unique_values - 1)
+                    # 否则使用标签编码
+                    df[feature] = encoder.fit_transform(df[feature])
         
-        # 游戏列表处理保持不变
+        # 处理游戏列表
         all_games = set()
         for games in df['games']:
             all_games.update(games)
@@ -97,15 +96,16 @@ class UserMatchingSystem:
         for game in all_games:
             df[f'game_{game}'] = df['games'].apply(lambda x: 1 if game in x else 0)
             
+        # 删除原始游戏列表列
         df = df.drop('games', axis=1)
         
         # 确保没有NaN值
-        df = df.fillna(0)  # 将任何NaN值替换为0
+        df = df.fillna(0)
         
         if self.debug_mode:
-            print("\n特征编码后的数据:")
+            print("\n编码后的特征:")
             print(df)
-        
+            
         return df
     
     def _calculate_gender_preference_weight(self, user1: UserProfile, user2: UserProfile) -> float:
@@ -138,7 +138,7 @@ class UserMatchingSystem:
             return 1.0
 
     def _calculate_similarity(self, user1_vector: np.ndarray, user2_vector: np.ndarray, user1: UserProfile, user2: UserProfile) -> float:
-        """计算两个用户向量之间的余弦相似度，并根据性别偏好顺序调整权重
+        """计算两个用户向量之间的余弦相似度
         
         Args:
             user1_vector: 第一个用户的特征向量
@@ -147,7 +147,7 @@ class UserMatchingSystem:
             user2: 第二个用户的完整档案
             
         Returns:
-            float: 调整后的相似度分数
+            float: 相似度分数
         """
         if self.debug_mode:
             print("\n计算相似度:")
@@ -166,22 +166,14 @@ class UserMatchingSystem:
         if norm_product == 0:
             return 0.0
             
-        # 计算基础余弦相似度并确保结果在[0,1]范围内
-        base_similarity = np.dot(user1_vector, user2_vector) / norm_product
-        base_similarity = (base_similarity + 1) / 2  # 将[-1,1]映射到[0,1]
+        # 计算余弦相似度并确保结果在[0,1]范围内
+        similarity = np.dot(user1_vector, user2_vector) / norm_product
+        similarity = (similarity + 1) / 2  # 将[-1,1]映射到[0,1]
         
         if self.debug_mode:
-            print(f"基础相似度: {base_similarity:.4f}")
+            print(f"相似度: {similarity:.4f}")
         
-        # 获取性别偏好权重
-        gender_preference_weight = self._calculate_gender_preference_weight(user1, user2)
-        
-        final_similarity = base_similarity * gender_preference_weight
-        
-        if self.debug_mode:
-            print(f"最终相似度: {final_similarity:.4f}")
-        
-        return final_similarity
+        return similarity
     
     def _calculate_feature_contributions(self, user1_vector: np.ndarray, user2_vector: np.ndarray, 
                                    feature_names: List[str], weights: List[float],
@@ -199,29 +191,50 @@ class UserMatchingSystem:
         Returns:
             Dict[str, float]: 每个特征的贡献度字典
         """
+        # 初始化贡献度字典
         contributions = {}
-        total_contribution = 0
         
-        # 计算每个特征的贡献
-        for i, (name, weight) in enumerate(zip(feature_names, weights)):
-            if name == 'gender':
-                # 使用新的性别偏好权重计算函数
-                gender_weight = self._calculate_gender_preference_weight(user1, user2)
-                contributions[name] = weight * gender_weight
-                total_contribution += contributions[name]
-            else:
-                # 其他特征的贡献
-                if user1_vector[i] == user2_vector[i] and user1_vector[i] != 0:
-                    contributions[name] = weight
-                    total_contribution += weight
+        # 定义特征的权重
+        feature_weights = {
+            'play_region': 15.0,    # 游戏区服权重15%
+            'play_time': 10.0,      # 游戏时间权重10%
+            'mbti': 7.5,           # MBTI性格权重7.5%
+            'zodiac': 2.5,         # 星座权重2.5%
+            'game_experience': 7.5, # 游戏经验权重7.5%
+            'online_status': 2.5,   # 在线状态权重2.5%
+            'game_style': 5.0       # 游戏风格权重5%
+        }
+        
+        # 计算特征的贡献度
+        for i, name in enumerate(feature_names):
+            if name in feature_weights:
+                if user1_vector[i] == user2_vector[i]:
+                    contributions[name] = feature_weights[name]
                 else:
-                    contributions[name] = 0
+                    contributions[name] = 0.0
+                    
+        # 确保所有特征都有贡献度值（即使是0）
+        for feature in feature_weights:
+            if feature not in contributions:
+                contributions[feature] = 0.0
+                
+        # 计算总贡献率
+        total_contribution = sum(contributions.values())
         
-        # 标准化贡献值，使总和为1
+        # 如果总贡献率大于0，将每个贡献标准化为总匹配度的一部分
         if total_contribution > 0:
-            for name in contributions:
-                contributions[name] = contributions[name] / total_contribution
-        
+            similarity = self._calculate_similarity(
+                user1_vector * weights, 
+                user2_vector * weights,
+                user1,
+                user2
+            ) * 100  # 转换为百分比
+            
+            # 将每个贡献按比例缩放到总匹配度
+            scale_factor = similarity / total_contribution
+            for feature in contributions:
+                contributions[feature] *= scale_factor
+                
         return contributions
 
     def find_matches(self, target_user: UserProfile, top_n: int = 20) -> List[Tuple[UserProfile, float, Dict[str, float]]]:
@@ -238,61 +251,102 @@ class UserMatchingSystem:
         if target_user not in self.users:
             self.add_user(target_user)
             
+        # 首先筛选出玩相同游戏的用户
+        matching_game_users = []
+        target_games = set(target_user.games)
+        for user in self.users:
+            if user != target_user:
+                user_games = set(user.games)
+                if target_games.intersection(user_games):  # 只要有一个游戏匹配就考虑
+                    matching_game_users.append(user)
+                    
+        if not matching_game_users:
+            return []
+            
         # 编码所有用户特征
         df = self._encode_categorical_features()
         
-        # 删除user_id列，因为它不应该参与相似度计算
-        if 'user_id' in df.columns:
-            df = df.drop('user_id', axis=1)
+        # 删除user_id列和游戏相关列
+        columns_to_keep = []
+        for col in df.columns:
+            if not col.startswith('game_') and col != 'user_id' and col != 'gender' and col != 'gender_preference':
+                columns_to_keep.append(col)
+                
+        df = df[columns_to_keep]
             
         # 计算每个特征的权重
         feature_weights = []
         feature_names = []
-        for col in df.columns:
-            if col.startswith('game_'):
-                # 平均分配游戏特征的权重
-                weight = self.feature_weights['games'] / len([c for c in df.columns if c.startswith('game_')])
-                feature_weights.append(weight)
-                feature_names.append(col)
-            else:
-                feature_weights.append(self.feature_weights.get(col, 0.0))
-                feature_names.append(col)
         
-        # 直接应用特征权重，不进行标准化
-        weighted_df = df.values * np.array(feature_weights)
+        # 重新计算除游戏和性别外的特征权重总和
+        total_remaining_weight = sum(weight for feature, weight in self.feature_weights.items() 
+                                   if feature not in ['games', 'gender'])
+        
+        # 归一化剩余权重
+        weight_scale = 1.0 / total_remaining_weight if total_remaining_weight > 0 else 0
+        
+        for col in df.columns:
+            weight = self.feature_weights.get(col, 0.0) * weight_scale
+            feature_weights.append(weight)
+            feature_names.append(col)
+        
+        if self.debug_mode:
+            print("\n特征权重:")
+            for name, weight in zip(feature_names, feature_weights):
+                print(f"{name}: {weight}")
+            print("\n数据框列:", df.columns.tolist())
+            
+        # 确保权重数组维度与数据框匹配
+        feature_weights = np.array(feature_weights)
         
         # 获取目标用户的特征向量
         target_index = self.users.index(target_user)
-        target_vector = weighted_df[target_index]
+        target_vector = df.values[target_index]
         
         # 按性别偏好优先级计算匹配结果
-        all_matches = []
-        for gender_pref in target_user.gender_preference:
-            current_matches = []
-            for i, user in enumerate(self.users):
-                if i != target_index:  # 排除目标用户自身
-                    if user.gender == gender_pref:
-                        # 计算特征贡献度
-                        contributions = self._calculate_feature_contributions(
-                            df.values[target_index], 
-                            df.values[i], 
-                            feature_names,
-                            feature_weights,
-                            target_user,
-                            user
-                        )
-                        # 计算相似度
-                        similarity = self._calculate_similarity(target_vector, weighted_df[i], target_user, user)
-                        current_matches.append((user, similarity, contributions))
-            
-            all_matches.extend(current_matches)
-            if len(all_matches) >= top_n:
-                break
+        gender_queues = {gender: [] for gender in target_user.gender_preference}
         
-        if not all_matches:
-            return []
+        # 计算匹配游戏用户的相似度并按性别分类
+        for user in matching_game_users:
+            user_index = self.users.index(user)
             
-        return sorted(all_matches, key=lambda x: x[1], reverse=True)[:top_n]
+            # 计算特征贡献度
+            contributions = self._calculate_feature_contributions(
+                target_vector,
+                df.values[user_index],
+                feature_names,
+                feature_weights,
+                target_user,
+                user
+            )
+            
+            # 计算加权向量
+            weighted_target = target_vector * feature_weights
+            weighted_other = df.values[user_index] * feature_weights
+            
+            # 计算总体相似度
+            similarity = self._calculate_similarity(weighted_target, weighted_other, target_user, user)
+            
+            # 将用户添加到对应性别的队列中
+            if user.gender in gender_queues:
+                gender_queues[user.gender].append((user, similarity, contributions))
+        
+        # 按照性别偏好顺序和相似度排序添加匹配结果
+        all_matches = []
+        remaining_slots = top_n
+        
+        for gender in target_user.gender_preference:
+            if remaining_slots <= 0:
+                break
+                
+            # 对当前性别的用户按相似度排序
+            current_gender_matches = sorted(gender_queues[gender], key=lambda x: x[1], reverse=True)
+            
+            # 添加当前性别的匹配结果，但不超过剩余槽位
+            all_matches.extend(current_gender_matches[:remaining_slots])
+            remaining_slots -= len(current_gender_matches[:remaining_slots])
+        
+        return all_matches
 
 # 示例代码
 if __name__ == "__main__":
@@ -337,13 +391,13 @@ if __name__ == "__main__":
     for user, similarity, contributions in matches:
         print(f"总匹配度: {similarity:.2%}")
         print(f"用户ID: {user.user_id}")
-        print(f"游戏: {', '.join(user.games)} (贡献: {contributions.get('game_' + user.games[0], 0):.1%})")
-        print(f"性别: {user.gender} (贡献: {contributions.get('gender', 0):.1%})")
-        print(f"游玩服务器: {user.play_region} (贡献: {contributions.get('play_region', 0):.1%})")
-        print(f"游玩时间: {user.play_time} (贡献: {contributions.get('play_time', 0):.1%})")
-        print(f"游戏经验: {user.game_experience} (贡献: {contributions.get('game_experience', 0):.1%})")
-        print(f"游戏风格: {user.game_style} (贡献: {contributions.get('game_style', 0):.1%})")
-        print(f"在线状态: {user.online_status} (贡献: {contributions.get('online_status', 0):.1%})")
-        print(f"MBTI: {user.mbti} (贡献: {contributions.get('mbti', 0):.1%})")
-        print(f"星座: {user.zodiac} (贡献: {contributions.get('zodiac', 0):.1%})")
+        print(f"游戏: {', '.join(user.games)}")
+        print(f"性别: {user.gender}")
+        print(f"游玩服务器: {user.play_region} (贡献: {contributions.get('play_region', 0):.1f}%)")
+        print(f"游玩时间: {user.play_time} (贡献: {contributions.get('play_time', 0):.1f}%)")
+        print(f"游戏经验: {user.game_experience} (贡献: {contributions.get('game_experience', 0):.1f}%)")
+        print(f"游戏风格: {user.game_style} (贡献: {contributions.get('game_style', 0):.1f}%)")
+        print(f"在线状态: {user.online_status} (贡献: {contributions.get('online_status', 0):.1f}%)")
+        print(f"MBTI: {user.mbti} (贡献: {contributions.get('mbti', 0):.1f}%)")
+        print(f"星座: {user.zodiac} (贡献: {contributions.get('zodiac', 0):.1f}%)")
         print("=" * 50) 
