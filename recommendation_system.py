@@ -45,8 +45,9 @@ class UserMatchingSystem:
         self.debug_mode = debug_mode  # 添加调试模式标志
         # 定义各特征在匹配计算中的权重（总和为1）
         self.feature_weights = {
-            'games': 0.8,              # 游戏偏好权重
-            'gender': 0.20,             # 性别特征权重
+            # 'games': 0.8,              # 游戏偏好权重
+            # 'gender': 0.20,             # 性别特征权重
+            'game_type': 0.20,
             'play_region': 0.15,        # 游戏区服权重
             'play_time': 0.10,          # 游戏时间权重
             'mbti': 0.075,             # MBTI性格权重
@@ -178,43 +179,20 @@ class UserMatchingSystem:
     def _calculate_feature_contributions(self, user1_vector: np.ndarray, user2_vector: np.ndarray, 
                                    feature_names: List[str], weights: List[float],
                                    user1: UserProfile, user2: UserProfile) -> Dict[str, float]:
-        """计算每个特征对最终相似度的贡献
-        
-        Args:
-            user1_vector: 第一个用户的特征向量
-            user2_vector: 第二个用户的特征向量
-            feature_names: 特征名称列表
-            weights: 特征权重列表
-            user1: 第一个用户的完整档案
-            user2: 第二个用户的完整档案
-            
-        Returns:
-            Dict[str, float]: 每个特征的贡献度字典
-        """
+        """计算每个特征对最终相似度的贡献"""
         # 初始化贡献度字典
         contributions = {}
         
-        # 定义特征的权重
-        feature_weights = {
-            'play_region': 15.0,    # 游戏区服权重15%
-            'play_time': 10.0,      # 游戏时间权重10%
-            'mbti': 7.5,           # MBTI性格权重7.5%
-            'zodiac': 2.5,         # 星座权重2.5%
-            'game_experience': 7.5, # 游戏经验权重7.5%
-            'online_status': 2.5,   # 在线状态权重2.5%
-            'game_style': 5.0       # 游戏风格权重5%
-        }
-        
-        # 计算特征的贡献度
+        # 使用类的 feature_weights
         for i, name in enumerate(feature_names):
-            if name in feature_weights:
+            if name in self.feature_weights:
                 if user1_vector[i] == user2_vector[i]:
-                    contributions[name] = feature_weights[name]
+                    contributions[name] = self.feature_weights[name] * 100  # 转换为百分比
                 else:
                     contributions[name] = 0.0
                     
-        # 确保所有特征都有贡献度值（即使是0）
-        for feature in feature_weights:
+        # 确保所有特征都有贡献度值
+        for feature in self.feature_weights:
             if feature not in contributions:
                 contributions[feature] = 0.0
                 
@@ -237,11 +215,40 @@ class UserMatchingSystem:
                 
         return contributions
 
-    def find_matches(self, target_user: UserProfile, top_n: int = 20) -> List[Tuple[UserProfile, float, Dict[str, float]]]:
+    def _calculate_game_type_similarity(self, user1: UserProfile, user2: UserProfile, games: List[GameProfile]) -> float:
+        """计算两个用户之间的游戏类型相似度
+        
+        Args:
+            user1: 第一个用户的完整档案
+            user2: 第二个用户的完整档案
+            games: 游戏档案列表
+            
+        Returns:
+            float: 游戏类型相似度分数
+        """
+        user1_types = set()
+        user2_types = set()
+        
+        for game in user1.games:
+            user1_types.update(get_game_types_by_name(game, games))
+        for game in user2.games:
+            user2_types.update(get_game_types_by_name(game, games))
+        
+        # 计算交集和并集
+        intersection = user1_types.intersection(user2_types)
+        union = user1_types.union(user2_types)
+        
+        # 计算Jaccard相似度
+        if not union:
+            return 0.0
+        return len(intersection) / len(union)
+
+    def find_matches(self, target_user: UserProfile, games: List[GameProfile], top_n: int = 20) -> List[Tuple[UserProfile, float, Dict[str, float]]]:
         """为目标用户找到最匹配的其他用户
         
         Args:
             target_user: 目标用户档案
+            games: 游戏档案列表
             top_n: 返回的最佳匹配数量
             
         Returns:
@@ -310,6 +317,9 @@ class UserMatchingSystem:
         for user in matching_game_users:
             user_index = self.users.index(user)
             
+            # 计算游戏类型相似度
+            game_type_similarity = self._calculate_game_type_similarity(target_user, user, games)
+            
             # 计算特征贡献度
             contributions = self._calculate_feature_contributions(
                 target_vector,
@@ -326,6 +336,9 @@ class UserMatchingSystem:
             
             # 计算总体相似度
             similarity = self._calculate_similarity(weighted_target, weighted_other, target_user, user)
+            
+            # 将游戏类型相似度加入总相似度
+            similarity += game_type_similarity * self.feature_weights.get('game_type', 0.0)
             
             # 将用户添加到对应性别的队列中
             if user.gender in gender_queues:
@@ -400,4 +413,4 @@ if __name__ == "__main__":
         print(f"在线状态: {user.online_status} (贡献: {contributions.get('online_status', 0):.1f}%)")
         print(f"MBTI: {user.mbti} (贡献: {contributions.get('mbti', 0):.1f}%)")
         print(f"星座: {user.zodiac} (贡献: {contributions.get('zodiac', 0):.1f}%)")
-        print("=" * 50) 
+        print("=" * 50)
