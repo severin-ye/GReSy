@@ -1,4 +1,5 @@
 # 导入所需的模块
+import os
 import json
 from dataclasses import dataclass
 from typing import List
@@ -66,8 +67,25 @@ if __name__ == "__main__":
     print("开始读取游戏池数据...")
     print("=" * 50)
     
+    # 获取当前脚本的目录
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # 构建完整的文件路径，指向 data/json 目录
+    file_path = os.path.join(current_dir, "data", "json", "game_pool.json")
+    
+    # 打印文件路径以便调试
+    print(f"尝试读取文件：{file_path}")
+    
+    # 检查目录是否存在
+    data_json_dir = os.path.join(current_dir, "data", "json")
+    if not os.path.exists(data_json_dir):
+        print(f"错误：json 目录不存在：{data_json_dir}")
+        print("正在创建目录结构...")
+        os.makedirs(data_json_dir)
+        print("请将 game_pool.json 文件放入 data/json 目录中")
+        exit(1)
+    
     # 加载所有游戏数据
-    games = load_game_pool("game_pool.json")
+    games = load_game_pool(file_path)
     
     # 打印游戏总数和所有游戏的详细信息
     print(f"共读取到 {len(games)} 个游戏的信息：")
@@ -77,4 +95,4 @@ if __name__ == "__main__":
     for game in games:
         print_game_info(game)
     
-    print("\n数据读取完成！") 
+    print("\n数据读取完成！")

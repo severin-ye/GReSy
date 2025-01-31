@@ -1,52 +1,22 @@
-# 导入所需的模块
-from user_pool_loader import load_user_pool  # 用于加载用户池数据
-from recommendation_system import UserMatchingSystem, UserProfile  # 用于用户匹配系统和用户档案
-import pandas as pd  # 用于数据处理和保存CSV
-from typing import List, Tuple, Dict  # 用于类型提示
-import json  # 用于JSON文件处理
+"""游戏玩家匹配系统主入口
 
-def save_matching_results(matches: List[Tuple[UserProfile, float, Dict[str, float]]], target_user: UserProfile, output_file: str):
-    """保存匹配结果到CSV文件
-    
-    Args:
-        matches: 匹配结果列表,每个元素是(用户档案,相似度,贡献度)的元组
-        target_user: 目标用户的档案
-        output_file: 输出CSV文件的路径
-    """
-    results = []
-    for user, similarity, _ in matches:  # 忽略贡献度信息
-        # 构建每一行的数据字典
-        result = {
-            '目标用户游戏': ','.join(target_user.games),  # 将游戏列表转换为逗号分隔的字符串
-            '目标用户性别': target_user.gender,
-            '目标用户性别倾向': ','.join(target_user.gender_preference),  # 将列表转换为字符串
-            '目标用户游玩区服': target_user.play_region,
-            '目标用户游玩时间': target_user.play_time,
-            '目标用户MBTI': target_user.mbti,
-            '目标用户星座': target_user.zodiac,
-            '目标用户游戏经验': target_user.game_experience,
-            '匹配用户游戏': ','.join(user.games),
-            '匹配用户性别': user.gender,
-            '匹配用户性别倾向': ','.join(user.gender_preference),  # 将列表转换为字符串
-            '匹配用户游玩区服': user.play_region,
-            '匹配用户游玩时间': user.play_time,
-            '匹配用户MBTI': user.mbti,
-            '匹配用户星座': user.zodiac,
-            '匹配用户游戏经验': user.game_experience,
-            '匹配度': f"{similarity:.2%}"  # 将相似度转换为百分比格式
-        }
-        results.append(result)
-    
-    # 创建DataFrame并保存为CSV
-    df = pd.DataFrame(results)
-    df.to_csv(output_file, index=False, encoding='utf-8-sig')  # 使用utf-8-sig编码以支持中文
+提供命令行界面来运行匹配系统
+"""
+
+from typing import List
+import os
+from matching.matcher import UserMatcher
+from utils.data_loaders import DataLoader
+from utils.data_exporters import MatchingResultExporter
+from models.user_profile import UserProfile
+from models.game_profile import GameProfile
 
 def print_user_info(user: UserProfile, title: str = "用户信息"):
     """打印用户信息的辅助函数"""
     print(f"\n{title}:")
     print(f"游戏: {', '.join(user.games)}")
     print(f"性别: {user.gender}")
-    print(f"性别倾向: {', '.join(user.gender_preference)}")  # 将列表转换为逗号分隔的字符串
+    print(f"性别倾向: {', '.join(user.gender_preference)}")
     print(f"游玩区服: {user.play_region}")
     print(f"游玩时间: {user.play_time}")
     print(f"MBTI: {user.mbti}")
@@ -55,54 +25,93 @@ def print_user_info(user: UserProfile, title: str = "用户信息"):
     print(f"在线状态: {user.online_status}")
     print(f"游戏风格: {user.game_style}")
 
-def main():
-    # 1. 加载用户池数据
-    print("正在加载用户池数据...")
-    users = load_user_pool("user_pool.json")
+def print_match_results(
+    matches: List[tuple],
+    target_user: UserProfile,
+    exporter: MatchingResultExporter
+):
+    """打印匹配结果"""
+    print(f"\n为用户 {target_user.user_id} 找到以下匹配：")
+    print("=" * 50)
     
-    # 2. 初始化匹配系统
-    print("初始化匹配系统...")
-    matching_system = UserMatchingSystem()
-    for user in users:
-        matching_system.add_user(user)
-    
-    while True:
-        try:
-            # 显示用户选择提示
-            print(f"\n请输入要查看的用户编号 (1-{len(users)})，输入0退出：")
-            user_index = int(input().strip())
-            
-            # 检查是否退出
-            if user_index == 0:
-                print("程序已退出")
-                break
-                
-            # 验证输入范围
-            if user_index < 1 or user_index > len(users):
-                print(f"请输入1到{len(users)}之间的数字！")
-                continue
-            
-            # 获取选中的用户
-            target_user = users[user_index - 1]
-            
-            # 打印目标用户信息
-            print_user_info(target_user, "目标用户信息")
-            
-            # 获取所有匹配结果
-            matches = matching_system.find_matches(target_user, top_n=len(users)-1)
-            
-            # 打印所有匹配用户信息（从最匹配到最不匹配）
-            print("\n所有用户匹配结果（按匹配度从高到低排序）：")
-            print("=" * 50)
-            for i, (matched_user, similarity, _) in enumerate(matches, 1):  # 忽略贡献度信息
-                print(f"\n第{i}名匹配用户 (匹配度: {similarity:.2%})")
-                print("-" * 30)
-                print_user_info(matched_user)
-                
-        except ValueError:
-            print("请输入有效的数字！")
-        except Exception as e:
-            print(f"发生错误: {str(e)}")
+    for user, similarity, contributions, possible_games in matches:
+        print(exporter.format_match_result(user, similarity, contributions))
+        print("-" * 50)
+        
+    if possible_games:
+        print("\n推荐游戏:")
+        for game, sim in possible_games:
+            print(f"- {game} (相似度: {sim:.2%})")
 
+def main():
+    """主函数"""
+    try:
+        # 1. 加载数据
+        print("正在加载数据...")
+        data_dir = os.path.join(os.path.dirname(__file__), "data", "json")
+        users = DataLoader.load_user_pool(os.path.join(data_dir, "user_pool.json"))
+        games = DataLoader.load_game_pool(os.path.join(data_dir, "game_pool.json"))
+        
+        # 2. 初始化系统组件
+        print("初始化匹配系统...")
+        matcher = UserMatcher(debug_mode=False)
+        exporter = MatchingResultExporter()
+        
+        # 3. 添加用户到匹配系统
+        for user in users:
+            matcher.add_user(user)
+            
+        while True:
+            try:
+                # 显示用户选择提示
+                print(f"\n请输入要查看的用户编号 (1-{len(users)})，输入0退出：")
+                user_index = int(input().strip())
+                
+                # 检查是否退出
+                if user_index == 0:
+                    print("程序已退出")
+                    break
+                    
+                # 验证输入范围
+                if user_index < 1 or user_index > len(users):
+                    print(f"请输入1到{len(users)}之间的数字！")
+                    continue
+                
+                # 获取选中的用户
+                target_user = users[user_index - 1]
+                
+                # 打印目标用户信息
+                print_user_info(target_user, "目标用户信息")
+                
+                # 执行匹配
+                matches = matcher.find_matches(target_user, games)
+                
+                if not matches:
+                    print("\n未找到匹配的用户。")
+                else:
+                    # 打印匹配结果
+                    print_match_results(matches, target_user, exporter)
+                    
+                    # 询问是否保存结果
+                    print("\n是否要保存匹配结果到CSV文件？(y/n)")
+                    if input().strip().lower() == 'y':
+                        output_dir = os.path.join(os.path.dirname(__file__), "data", "output")
+                        os.makedirs(output_dir, exist_ok=True)
+                        output_file = os.path.join(output_dir, f"matching_results_{target_user.user_id}.csv")
+                        exporter.export_to_csv(matches, target_user, output_file)
+                        print(f"结果已保存到: {output_file}")
+                    
+            except ValueError as e:
+                print(f"输入错误: {str(e)}")
+            except Exception as e:
+                print(f"发生错误: {str(e)}")
+                if matcher.debug_mode:
+                    raise
+                
+    except Exception as e:
+        print(f"程序启动失败: {str(e)}")
+        if matcher.debug_mode:
+            raise
+        
 if __name__ == "__main__":
     main()

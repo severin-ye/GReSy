@@ -1,4 +1,5 @@
 # 导入所需的库
+import os
 import numpy as np  # 用于数值计算和数组操作
 from typing import List, Dict, Tuple  # 用于类型提示,增强代码可读性和维护性
 from dataclasses import dataclass     # 用于创建数据类,简化类的定义
@@ -509,8 +510,13 @@ if __name__ == "__main__":
     matching_system.add_user(user3)
     matching_system.add_user(user4)
     
+    # 获取当前脚本的目录
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # 构建完整的文件路径，指向 data/json 目录
+    game_pool_path = os.path.join(current_dir, "data", "json", "game_pool.json")
+    
     # 加载游戏池
-    games = load_game_pool("game_pool.json")
+    games = load_game_pool(game_pool_path)
     
     # 只为user1进行匹配测试
     test_user = user1
