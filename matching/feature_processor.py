@@ -5,7 +5,7 @@
 
 import pandas as pd
 import numpy as np
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from models.user_profile import UserProfile
 
@@ -33,6 +33,34 @@ class FeatureProcessor:
         }
         self.scaler = StandardScaler()
         
+    def _encode_mbti(self, mbti: str) -> List[float]:
+        """编码MBTI特征为数值向量"""
+        dimensions = {
+            'I/E': [0, 1],  # 内向/外向
+            'N/S': [0, 1],  # 直觉/感知
+            'T/F': [0, 1],  # 思考/感受
+            'J/P': [0, 1]   # 判断/知觉
+        }
+        return [dimensions[dim][0 if mbti[i] in 'ISTJ' else 1] 
+                for i, dim in enumerate(['I/E', 'N/S', 'T/F', 'J/P'])]
+                
+    def _encode_time_period(self, time: str) -> List[float]:
+        """将时间段编码为循环特征"""
+        time_periods = ['早上', '中午', '下午', '晚上', '凌晨']
+        idx = time_periods.index(time)
+        angle = 2 * np.pi * idx / len(time_periods)
+        return [np.cos(angle), np.sin(angle)]
+        
+    def _encode_game_experience(self, exp: str) -> float:
+        """将游戏经验编码为数值"""
+        experience_levels = {
+            '初级': 0.25,
+            '中级': 0.5,
+            '高级': 0.75,
+            '高超': 1.0
+        }
+        return experience_levels.get(exp, 0.0)
+        
     def encode_categorical_features(self, users: List[UserProfile]) -> pd.DataFrame:
         """将分类特征编码为数值形式
         
@@ -50,13 +78,32 @@ class FeatureProcessor:
         columns_to_drop = ['user_id']
         df = df.drop(columns=columns_to_drop, errors='ignore')
         
-        # 对每个分类特征进行编码
-        for feature, encoder in self.label_encoders.items():
+        # 处理MBTI特征
+        mbti_features = ['mbti_IE', 'mbti_NS', 'mbti_TF', 'mbti_JP']
+        mbti_vectors = [self._encode_mbti(mbti) for mbti in df['mbti']]
+        for i, feature in enumerate(mbti_features):
+            df[feature] = [vector[i] for vector in mbti_vectors]
+        df = df.drop('mbti', axis=1)
+        
+        # 处理时间特征
+        time_features = ['time_cos', 'time_sin']
+        time_vectors = [self._encode_time_period(time) for time in df['play_time']]
+        for i, feature in enumerate(time_features):
+            df[feature] = [vector[i] for vector in time_vectors]
+        df = df.drop('play_time', axis=1)
+        
+        # 处理游戏经验
+        df['game_experience'] = df['game_experience'].apply(self._encode_game_experience)
+        
+        # 处理其他分类特征
+        categorical_features = ['gender', 'gender_preference', 'play_region', 
+                              'online_status', 'game_style']
+        for feature in categorical_features:
             if feature in df.columns:
                 if len(df[feature].unique()) == 1:
                     df[feature] = 1
                 else:
-                    df[feature] = encoder.fit_transform(df[feature])
+                    df[feature] = self.label_encoders[feature].fit_transform(df[feature])
         
         # 处理游戏列表
         all_games = set()
