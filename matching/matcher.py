@@ -151,8 +151,10 @@ class UserMatcher:
         if target_user not in self.users:
             self.add_user(target_user)
             
-        # 获取目标用户可能感兴趣的游戏
-        possible_games = self._get_similar_games(target_user.games, games)
+        # 获取目标用户可能感兴趣的游戏（过滤掉已玩过的）
+        all_possible_games = self._get_similar_games(target_user.games, games)
+        possible_games = [(game, sim) for game, sim in all_possible_games 
+                         if game not in target_user.games]
         target_possible_games = [game for game, _ in possible_games]
         target_all_games = set(target_user.games + target_possible_games)
         
@@ -203,6 +205,7 @@ class UserMatcher:
                 for key in contributions:
                     contributions[key] *= 0.5
             
+            # 确保每个匹配结果都包含可能的游戏列表
             matches.append((user, final_similarity, contributions, possible_games))
             
         # 按相似度排序并返回前top_n个结果

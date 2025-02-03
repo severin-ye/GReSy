@@ -38,4 +38,4 @@ class GameProfile:
             types=data.get('types', []),
             platforms=data.get('platforms', []),
             tags=data.get('tags', [])
-        ) 
+        )

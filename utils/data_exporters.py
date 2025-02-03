@@ -46,9 +46,9 @@ class MatchingResultExporter:
             }
             results.append(result)
             
-        df = pd.DataFrame(results)
-        df.to_csv(output_file, index=False, encoding='utf-8-sig')
-        
+            df = pd.DataFrame(results)
+            df.to_csv(output_file, index=False, encoding='utf-8-sig')
+            
     @staticmethod
     def format_match_result(
         user: UserProfile,

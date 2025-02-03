@@ -30,4 +30,4 @@ class UserProfile:
             'game_experience': self.game_experience,
             'online_status': self.online_status,
             'game_style': self.game_style
-        } 
+        }
