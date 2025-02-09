@@ -1,41 +1,35 @@
 """游戏档案模型
 
-定义游戏相关的数据结构
+定义游戏的基本信息和属性
 """
 
-from dataclasses import dataclass
 from typing import List
 
-@dataclass
 class GameProfile:
-    """游戏档案类，存储游戏的基本信息"""
-    name: str           # 游戏名称
-    types: List[str]    # 游戏类型列表
-    platforms: List[str] # 支持的平台
-    tags: List[str]     # 游戏标签
+    """游戏档案类"""
     
-    def to_dict(self) -> dict:
-        """将游戏档案转换为字典格式"""
-        return {
-            'name': self.name,
-            'types': self.types,
-            'platforms': self.platforms,
-            'tags': self.tags
-        }
-        
-    @classmethod
-    def from_dict(cls, data: dict) -> 'GameProfile':
-        """从字典创建游戏档案实例
+    def __init__(
+        self,
+        name: str,
+        types: List[str],
+        platforms: List[str],
+        tags: List[str]
+    ):
+        """初始化游戏档案
         
         Args:
-            data: 游戏数据字典
-            
-        Returns:
-            GameProfile: 游戏档案实例
+            name: 游戏名称
+            types: 游戏类型列表
+            platforms: 游戏平台列表
+            tags: 游戏标签列表
         """
-        return cls(
-            name=data['name'],
-            types=data.get('types', []),
-            platforms=data.get('platforms', []),
-            tags=data.get('tags', [])
-        )
+        self.name = name
+        self.types = types
+        self.platforms = platforms
+        self.tags = tags
+        
+    def __eq__(self, other):
+        """判断两个游戏是否相同"""
+        if not isinstance(other, GameProfile):
+            return False
+        return self.name == other.name
