@@ -25,7 +25,7 @@ class GameMatcher:
         """
         self.games = games
         
-    def calculate_game_type_similarity(self, user1: UserProfile, user2: UserProfile) -> float:
+    def match_type(self, user1: UserProfile, user2: UserProfile) -> float:
         """计算游戏类型相似度
         
         Args:
@@ -70,7 +70,7 @@ class GameMatcher:
                     
         return total_correlation / count if count > 0 else 0.0
         
-    def calculate_game_preference_similarity(self, user1: UserProfile, user2: UserProfile) -> float:
+    def match_preference(self, user1: UserProfile, user2: UserProfile) -> float:
         """计算游戏偏好相似度
         
         Args:
@@ -90,7 +90,7 @@ class GameMatcher:
         # 计算Jaccard相似度
         return len(common_games) / len(set(user1.games).union(set(user2.games)))
         
-    def calculate_social_similarity(self, user1: UserProfile, user2: UserProfile) -> float:
+    def match_social(self, user1: UserProfile, user2: UserProfile) -> float:
         """计算社交属性相似度
         
         Args:
@@ -128,9 +128,9 @@ class GameMatcher:
         Returns:
             Dict[str, float]: 包含各维度匹配分数的字典
         """
-        type_similarity = self.calculate_game_type_similarity(user1, user2)
-        preference_similarity = self.calculate_game_preference_similarity(user1, user2)
-        social_similarity = self.calculate_social_similarity(user1, user2)
+        type_similarity = self.match_type(user1, user2)
+        preference_similarity = self.match_preference(user1, user2)
+        social_similarity = self.match_social(user1, user2)
         
         # 使用配置的权重计算加权分数
         weighted_score = (

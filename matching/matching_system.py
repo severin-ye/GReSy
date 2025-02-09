@@ -65,7 +65,7 @@ class MatchingSystem:
             # 偏好匹配分数
             'mbti': mbti_score,
             'zodiac': zodiac_score,
-            'gender': ordered_results['gender_preference'],
+            'gender': ordered_results['gender'],
             
             # 游戏匹配分数
             'game_type': game_results['game_type'],

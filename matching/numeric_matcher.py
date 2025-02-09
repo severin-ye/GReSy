@@ -34,30 +34,30 @@ class NumericMatcher:
             '高超': 4
         }
         
-    def calculate_time_similarity(self, time1: str, time2: str) -> float:
+    def match_time(self, user1: UserProfile, user2: UserProfile) -> float:
         """计算时间匹配度
         
         Args:
-            time1: 第一个时间段
-            time2: 第二个时间段
+            user1: 第一个用户
+            user2: 第二个用户
             
         Returns:
             float: 相似度分数 [0,1]
         """
-        return self.time_similarity[time1][time2]
+        return self.time_similarity[user1.play_time][user2.play_time]
             
-    def calculate_experience_similarity(self, exp1: str, exp2: str) -> float:
+    def match_experience(self, user1: UserProfile, user2: UserProfile) -> float:
         """计算游戏经验匹配度
         
         Args:
-            exp1: 第一个经验等级
-            exp2: 第二个经验等级
+            user1: 第一个用户
+            user2: 第二个用户
             
         Returns:
             float: 相似度分数 [0,1]
         """
-        level1 = self.experience_levels[exp1]
-        level2 = self.experience_levels[exp2]
+        level1 = self.experience_levels[user1.game_experience]
+        level2 = self.experience_levels[user2.game_experience]
         
         # 计算等级差异
         level_diff = abs(level1 - level2)
@@ -69,17 +69,17 @@ class NumericMatcher:
         else:
             return 0.3
             
-    def calculate_style_similarity(self, style1: str, style2: str) -> float:
+    def match_style(self, user1: UserProfile, user2: UserProfile) -> float:
         """计算游戏风格匹配度
         
         Args:
-            style1: 第一个游戏风格
-            style2: 第二个游戏风格
+            user1: 第一个用户
+            user2: 第二个用户
             
         Returns:
             float: 相似度分数 [0,1]
         """
-        return 1.0 if style1 == style2 else 0.3
+        return 1.0 if user1.game_style == user2.game_style else 0.3
         
     def get_match_result(self, user1: UserProfile, user2: UserProfile) -> Dict[str, float]:
         """获取数值相似度匹配结果
@@ -92,10 +92,7 @@ class NumericMatcher:
             Dict[str, float]: 包含各维度匹配分数的字典
         """
         return {
-            'time': self.calculate_time_similarity(user1.play_time, user2.play_time),
-            'experience': self.calculate_experience_similarity(
-                user1.game_experience, 
-                user2.game_experience
-            ),
-            'style': self.calculate_style_similarity(user1.game_style, user2.game_style)
+            'time': self.match_time(user1, user2),
+            'experience': self.match_experience(user1, user2),
+            'style': self.match_style(user1, user2)
         } 
