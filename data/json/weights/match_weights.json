@@ -14,12 +14,6 @@
         "adjacent": 0.7,
         "far": 0.3
     },
-    "mbti_weights": {
-        "I/E": 0.3,
-        "N/S": 0.2,
-        "T/F": 0.3,
-        "J/P": 0.2
-    },
     "gender_preference_scale": 0.7,
     "dimension_weights": {
         "online_status": 5,
