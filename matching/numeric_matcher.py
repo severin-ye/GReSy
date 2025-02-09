@@ -3,6 +3,8 @@
 处理基于数值范围的匹配逻辑，如游戏风格、游戏经验、游玩时间等
 """
 
+import json
+import os
 from typing import Dict, List, Tuple
 from models.user_profile import UserProfile
 
@@ -14,25 +16,23 @@ class NumericMatcher:
     
     def __init__(self):
         """初始化数值相似度匹配器"""
-        # 定义时间段及其权重
-        self.time_periods = ['凌晨', '早上', '中午', '下午', '晚上']
+        self._load_configs()
         
-        # 定义时间段相似度矩阵
-        self.time_similarity = {
-            '凌晨': {'凌晨': 1.0, '早上': 0.7, '中午': 0.3, '下午': 0.3, '晚上': 0.3},
-            '早上': {'凌晨': 0.7, '早上': 1.0, '中午': 0.7, '下午': 0.3, '晚上': 0.3},
-            '中午': {'凌晨': 0.3, '早上': 0.7, '中午': 1.0, '下午': 0.7, '晚上': 0.3},
-            '下午': {'凌晨': 0.3, '早上': 0.3, '中午': 0.7, '下午': 1.0, '晚上': 0.7},
-            '晚上': {'凌晨': 0.3, '早上': 0.3, '中午': 0.3, '下午': 0.7, '晚上': 1.0}
-        }
+    def _load_configs(self):
+        """加载配置文件"""
+        base_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'json')
         
-        # 定义游戏经验等级
-        self.experience_levels = {
-            '初级': 1,
-            '中级': 2,
-            '高级': 3,
-            '高超': 4
-        }
+        # 加载时间相似度配置
+        with open(os.path.join(base_path, 'time_similarity.json'), 'r', encoding='utf-8') as f:
+            config = json.load(f)
+            self.time_periods = config['time_periods']
+            self.time_similarity = config['time_similarity']
+            
+        # 加载经验等级配置
+        with open(os.path.join(base_path, 'experience_levels.json'), 'r', encoding='utf-8') as f:
+            config = json.load(f)
+            self.experience_levels = config['experience_levels']
+            self.level_similarity = config['level_similarity']
         
     def match_time(self, user1: UserProfile, user2: UserProfile) -> float:
         """计算时间匹配度
@@ -61,13 +61,7 @@ class NumericMatcher:
         
         # 计算等级差异
         level_diff = abs(level1 - level2)
-        
-        if level_diff == 0:
-            return 1.0
-        elif level_diff == 1:
-            return 0.7
-        else:
-            return 0.3
+        return float(self.level_similarity[str(level_diff)])
             
     def match_style(self, user1: UserProfile, user2: UserProfile) -> float:
         """计算游戏风格匹配度

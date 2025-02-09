@@ -1,0 +1,12 @@
+{
+    "game_similarity_weights": {
+        "type_similarity": 0.4,
+        "preference_similarity": 0.3,
+        "social_similarity": 0.3
+    },
+    "social_weights": {
+        "online_status": 0.3,
+        "game_style": 0.3,
+        "experience": 0.4
+    }
+} 

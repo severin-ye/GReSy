@@ -1,0 +1,8 @@
+{
+    "platform_weights": {
+        "手游": 1.0,
+        "端游": 0.8,
+        "主机": 0.6
+    },
+    "game_similarity_threshold": 0.4
+} 

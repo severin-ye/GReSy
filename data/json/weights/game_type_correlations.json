@@ -1,0 +1,39 @@
+{
+    "game_type_correlations": {
+        "MOBA": {
+            "MOBA": 1.0,
+            "RTS": 0.8,
+            "FPS": 0.6,
+            "RPG": 0.4,
+            "MMORPG": 0.5
+        },
+        "RTS": {
+            "MOBA": 0.8,
+            "RTS": 1.0,
+            "FPS": 0.5,
+            "RPG": 0.4,
+            "MMORPG": 0.4
+        },
+        "FPS": {
+            "MOBA": 0.6,
+            "RTS": 0.5,
+            "FPS": 1.0,
+            "RPG": 0.3,
+            "MMORPG": 0.4
+        },
+        "RPG": {
+            "MOBA": 0.4,
+            "RTS": 0.4,
+            "FPS": 0.3,
+            "RPG": 1.0,
+            "MMORPG": 0.8
+        },
+        "MMORPG": {
+            "MOBA": 0.5,
+            "RTS": 0.4,
+            "FPS": 0.4,
+            "RPG": 0.8,
+            "MMORPG": 1.0
+        }
+    }
+} 

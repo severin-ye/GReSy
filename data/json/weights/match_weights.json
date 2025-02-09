@@ -1,0 +1,37 @@
+{
+    "time_match_weights": {
+        "exact": 1.0,
+        "adjacent": 0.7,
+        "opposite": 0.3
+    },
+    "region_match_weights": {
+        "exact": 1.0,
+        "close": 0.7,
+        "far": 0.3
+    },
+    "experience_match_weights": {
+        "exact": 1.0,
+        "adjacent": 0.7,
+        "far": 0.3
+    },
+    "mbti_weights": {
+        "I/E": 0.3,
+        "N/S": 0.2,
+        "T/F": 0.3,
+        "J/P": 0.2
+    },
+    "gender_preference_scale": 0.7,
+    "dimension_weights": {
+        "online_status": 5,
+        "server": 10,
+        "time": 15,
+        "experience": 10,
+        "style": 10,
+        "mbti": 10,
+        "zodiac": 5,
+        "gender": 10,
+        "game_type": 10,
+        "game_preference": 10,
+        "game_social": 5
+    }
+} 

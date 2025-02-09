@@ -6,10 +6,11 @@
 3. 社交属性相似度
 """
 
+import json
+import os
 from typing import Dict, List, Set, Tuple
 from models.user_profile import UserProfile
 from models.game_profile import GameProfile
-from config.weights import GAME_TYPE_CORRELATIONS, GAME_SIMILARITY_WEIGHTS
 
 class GameMatcher:
     """游戏多维度匹配器
@@ -24,6 +25,27 @@ class GameMatcher:
             games: 游戏档案列表
         """
         self.games = games
+        self._load_configs()
+        
+    def _load_configs(self):
+        """加载配置文件"""
+        base_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'json')
+        
+        # 加载游戏类型相关性
+        with open(os.path.join(base_path, 'game_type_correlations.json'), 'r', encoding='utf-8') as f:
+            self.game_type_correlations = json.load(f)['game_type_correlations']
+            
+        # 加载游戏相似度权重
+        with open(os.path.join(base_path, 'game_similarity_weights.json'), 'r', encoding='utf-8') as f:
+            config = json.load(f)
+            self.game_similarity_weights = config['game_similarity_weights']
+            self.social_weights = config['social_weights']
+            
+        # 加载经验等级配置
+        with open(os.path.join(base_path, 'experience_levels.json'), 'r', encoding='utf-8') as f:
+            config = json.load(f)
+            self.experience_levels = config['experience_levels']
+            self.level_similarity = config['level_similarity']
         
     def match_type(self, user1: UserProfile, user2: UserProfile) -> float:
         """计算游戏类型相似度
@@ -58,8 +80,8 @@ class GameMatcher:
         
         for type1 in user1_types:
             for type2 in user2_types:
-                if type1 in GAME_TYPE_CORRELATIONS and type2 in GAME_TYPE_CORRELATIONS[type1]:
-                    total_correlation += GAME_TYPE_CORRELATIONS[type1][type2]
+                if type1 in self.game_type_correlations and type2 in self.game_type_correlations[type1]:
+                    total_correlation += self.game_type_correlations[type1][type2]
                     count += 1
                 elif type1 == type2:
                     total_correlation += 1.0
@@ -107,16 +129,14 @@ class GameMatcher:
         style_match = 1.0 if user1.game_style == user2.game_style else 0.5
         
         # 计算游戏经验匹配度
-        exp_match = 1.0 if user1.game_experience == user2.game_experience else \
-                   0.7 if abs(self._get_exp_level(user1.game_experience) - 
-                             self._get_exp_level(user2.game_experience)) == 1 else 0.3
+        level1 = self.experience_levels[user1.game_experience]
+        level2 = self.experience_levels[user2.game_experience]
+        level_diff = abs(level1 - level2)
+        exp_match = float(self.level_similarity[str(level_diff)])
                              
-        return (online_match * 0.3 + style_match * 0.3 + exp_match * 0.4)
-        
-    def _get_exp_level(self, experience: str) -> int:
-        """获取经验等级数值"""
-        levels = {'初级': 1, '中级': 2, '高级': 3, '高超': 4}
-        return levels.get(experience, 0)
+        return (online_match * self.social_weights['online_status'] + 
+                style_match * self.social_weights['game_style'] + 
+                exp_match * self.social_weights['experience'])
         
     def get_match_result(self, user1: UserProfile, user2: UserProfile) -> Dict[str, float]:
         """获取游戏匹配结果
@@ -134,9 +154,9 @@ class GameMatcher:
         
         # 使用配置的权重计算加权分数
         weighted_score = (
-            type_similarity * GAME_SIMILARITY_WEIGHTS['type_similarity'] +
-            preference_similarity * GAME_SIMILARITY_WEIGHTS['preference_similarity'] +
-            social_similarity * GAME_SIMILARITY_WEIGHTS['social_similarity']
+            type_similarity * self.game_similarity_weights['type_similarity'] +
+            preference_similarity * self.game_similarity_weights['preference_similarity'] +
+            social_similarity * self.game_similarity_weights['social_similarity']
         )
         
         return {
