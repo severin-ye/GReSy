@@ -9,4 +9,9 @@
 from .user_profile import UserProfile
 from .game_profile import GameProfile
 
-__all__ = ['UserProfile', 'GameProfile'] 
+__all__ = ['UserProfile', 'GameProfile']
+
+"""模型包
+
+包含所有数据模型类
+""" 

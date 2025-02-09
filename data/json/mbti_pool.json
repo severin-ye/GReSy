@@ -1,0 +1,110 @@
+{
+    "mbti_types": [
+        {
+            "自身mbti": "INTJ",
+            "偏好mbti": {
+                "ENFP": 9,
+                "ENTP": 8
+            }
+        },
+        {
+            "自身mbti": "INTP",
+            "偏好mbti": {
+                "ENTJ": 9
+            }
+        },
+        {
+            "自身mbti": "ENTJ",
+            "偏好mbti": {
+                "INTP": 9
+            }
+        },
+        {
+            "自身mbti": "ENTP",
+            "偏好mbti": {
+                "INFJ": 9
+            }
+        },
+        {
+            "自身mbti": "INFJ",
+            "偏好mbti": {
+                "ENFP": 9,
+                "ENTP": 8
+            }
+        },
+        {
+            "自身mbti": "INFP",
+            "偏好mbti": {
+                "ENFJ": 9
+            }
+        },
+        {
+            "自身mbti": "ENFJ",
+            "偏好mbti": {
+                "INFP": 9
+            }
+        },
+        {
+            "自身mbti": "ENFP",
+            "偏好mbti": {
+                "INFJ": 9,
+                "INTJ": 8
+            }
+        },
+        {
+            "自身mbti": "ISTJ",
+            "偏好mbti": {
+                "ESFP": 8,
+                "ESTP": 7
+            }
+        },
+        {
+            "自身mbti": "ISFJ",
+            "偏好mbti": {
+                "ESFJ": 8,
+                "ISTJ": 7
+            }
+        },
+        {
+            "自身mbti": "ESTJ",
+            "偏好mbti": {
+                "ISTP": 8,
+                "ENTJ": 7
+            }
+        },
+        {
+            "自身mbti": "ESFJ",
+            "偏好mbti": {
+                "ISFP": 8
+            }
+        },
+        {
+            "自身mbti": "ISTP",
+            "偏好mbti": {
+                "ESTJ": 8,
+                "ENTJ": 7
+            }
+        },
+        {
+            "自身mbti": "ISFP",
+            "偏好mbti": {
+                "ESFJ": 8,
+                "ESFP": 7
+            }
+        },
+        {
+            "自身mbti": "ESTP",
+            "偏好mbti": {
+                "ISFJ": 8,
+                "ISTJ": 7
+            }
+        },
+        {
+            "自身mbti": "ESFP",
+            "偏好mbti": {
+                "ISFJ": 8,
+                "ISTJ": 7
+            }
+        }
+    ]
+}
