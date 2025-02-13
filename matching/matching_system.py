@@ -3,6 +3,7 @@
 整合所有匹配器，提供完整的匹配功能
 """
 
+import os
 from typing import Dict, List, Tuple
 from models.user_profile import UserProfile
 from models.game_profile import GameProfile
@@ -11,7 +12,7 @@ from matching.numeric_matcher import NumericMatcher
 from matching.preference_matcher import PreferenceMatcher, MBTIMatcher, ZodiacMatcher
 from matching.ordered_matcher import OrderedMatcher
 from matching.game_matcher import GameMatcher
-from config.weights import DIMENSION_WEIGHTS
+from utils.loaders import WeightsLoader
 
 class MatchingSystem:
     """综合匹配系统
@@ -25,6 +26,12 @@ class MatchingSystem:
         Args:
             games: 游戏档案列表
         """
+        # 加载维度权重
+        base_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'json')
+        weights_loader = WeightsLoader(base_path)
+        weights_data = weights_loader.get_weights('match_weights')
+        self.dimension_weights = weights_data.get('dimension_weights', {})
+        
         # 初始化各个匹配器
         self.base_matcher = BaseMatcher()
         self.numeric_matcher = NumericMatcher()
@@ -75,9 +82,9 @@ class MatchingSystem:
         
         # 计算加权总分
         total_score = sum(
-            score * DIMENSION_WEIGHTS.get(dimension, 1.0)
+            score * self.dimension_weights.get(dimension, 1.0)
             for dimension, score in match_scores.items()
-        ) / sum(DIMENSION_WEIGHTS.values())
+        ) / sum(self.dimension_weights.values())
         
         # 添加总分
         match_scores['total_score'] = total_score

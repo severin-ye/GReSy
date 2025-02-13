@@ -3,10 +3,10 @@
 处理基于数值范围的匹配逻辑，如游戏风格、游戏经验、游玩时间等
 """
 
-import json
 import os
-from typing import Dict, List, Tuple
+from typing import Dict
 from models.user_profile import UserProfile
+from utils.loaders import WeightsLoader, ConfigLoader
 
 class NumericMatcher:
     """数值相似度匹配器
@@ -22,17 +22,19 @@ class NumericMatcher:
         """加载配置文件"""
         base_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'json')
         
+        # 初始化加载器
+        weights_loader = WeightsLoader(base_path)
+        config_loader = ConfigLoader(base_path)
+        
         # 加载时间相似度配置
-        with open(os.path.join(base_path, 'time_similarity.json'), 'r', encoding='utf-8') as f:
-            config = json.load(f)
-            self.time_periods = config['time_periods']
-            self.time_similarity = config['time_similarity']
+        time_data = weights_loader.get_weights('time_similarity')
+        self.time_periods = time_data.get('time_periods', {})
+        self.time_similarity = time_data.get('time_similarity', {})
             
         # 加载经验等级配置
-        with open(os.path.join(base_path, 'experience_levels.json'), 'r', encoding='utf-8') as f:
-            config = json.load(f)
-            self.experience_levels = config['experience_levels']
-            self.level_similarity = config['level_similarity']
+        experience_data = config_loader.get_config('experience_levels')
+        self.experience_levels = experience_data.get('experience_levels', {})
+        self.level_similarity = experience_data.get('level_similarity', {})
         
     def match_time(self, user1: UserProfile, user2: UserProfile) -> float:
         """计算时间匹配度
@@ -44,6 +46,8 @@ class NumericMatcher:
         Returns:
             float: 相似度分数 [0,1]
         """
+        if not self.time_similarity or user1.play_time not in self.time_similarity or user2.play_time not in self.time_similarity[user1.play_time]:
+            return 0.0
         return self.time_similarity[user1.play_time][user2.play_time]
             
     def match_experience(self, user1: UserProfile, user2: UserProfile) -> float:
@@ -56,12 +60,15 @@ class NumericMatcher:
         Returns:
             float: 相似度分数 [0,1]
         """
+        if not self.experience_levels or user1.game_experience not in self.experience_levels or user2.game_experience not in self.experience_levels:
+            return 0.0
+            
         level1 = self.experience_levels[user1.game_experience]
         level2 = self.experience_levels[user2.game_experience]
         
         # 计算等级差异
         level_diff = abs(level1 - level2)
-        return float(self.level_similarity[str(level_diff)])
+        return float(self.level_similarity.get(str(level_diff), 0.0))
             
     def match_style(self, user1: UserProfile, user2: UserProfile) -> float:
         """计算游戏风格匹配度

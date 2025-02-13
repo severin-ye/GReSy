@@ -6,11 +6,11 @@
 3. 社交属性相似度
 """
 
-import json
 import os
 from typing import Dict, List, Set, Tuple
 from models.user_profile import UserProfile
 from models.game_profile import GameProfile
+from utils.loaders import ConfigLoader, WeightsLoader
 
 class GameMatcher:
     """游戏多维度匹配器
@@ -31,21 +31,23 @@ class GameMatcher:
         """加载配置文件"""
         base_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'json')
         
+        # 初始化加载器
+        weights_loader = WeightsLoader(base_path)
+        config_loader = ConfigLoader(base_path)
+        
         # 加载游戏类型相关性
-        with open(os.path.join(base_path, 'game_type_correlations.json'), 'r', encoding='utf-8') as f:
-            self.game_type_correlations = json.load(f)['game_type_correlations']
+        game_type_data = weights_loader.get_weights('game_type_correlations')
+        self.game_type_correlations = game_type_data.get('game_type_correlations', {})
             
         # 加载游戏相似度权重
-        with open(os.path.join(base_path, 'game_similarity_weights.json'), 'r', encoding='utf-8') as f:
-            config = json.load(f)
-            self.game_similarity_weights = config['game_similarity_weights']
-            self.social_weights = config['social_weights']
+        similarity_data = weights_loader.get_weights('game_similarity_weights')
+        self.game_similarity_weights = similarity_data.get('game_similarity_weights', {})
+        self.social_weights = similarity_data.get('social_weights', {})
             
         # 加载经验等级配置
-        with open(os.path.join(base_path, 'experience_levels.json'), 'r', encoding='utf-8') as f:
-            config = json.load(f)
-            self.experience_levels = config['experience_levels']
-            self.level_similarity = config['level_similarity']
+        experience_data = config_loader.get_config('experience_levels')
+        self.experience_levels = experience_data.get('experience_levels', {})
+        self.level_similarity = experience_data.get('level_similarity', {})
         
     def match_type(self, user1: UserProfile, user2: UserProfile) -> float:
         """计算游戏类型相似度

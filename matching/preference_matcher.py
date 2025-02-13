@@ -4,9 +4,9 @@
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Tuple
-import json
+from typing import Dict
 import os
+from utils.loaders import PoolsLoader
 
 class PreferenceMatcher(ABC):
     """偏好匹配基类
@@ -24,19 +24,21 @@ class PreferenceMatcher(ABC):
         self.preference_data = self._load_preference_data()
         
     @abstractmethod
-    def _get_data_file_path(self) -> str:
-        """获取偏好数据文件路径"""
+    def _get_pool_name(self) -> str:
+        """获取数据池名称"""
         pass
         
     def _load_preference_data(self) -> Dict:
         """加载偏好数据"""
-        file_path = self._get_data_file_path()
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"偏好数据文件不存在: {file_path}")
-            
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-            
+        base_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'json')
+        pools_loader = PoolsLoader(base_path)
+        
+        pool_name = self._get_pool_name()
+        data = getattr(pools_loader, f'load_{pool_name}_data')()
+        if not data:
+            raise FileNotFoundError(f"偏好数据加载失败: {pool_name}")
+        return data
+        
     @abstractmethod
     def calculate_preference_score(self, source_value: str, target_value: str) -> float:
         """计算偏好匹配分数
@@ -66,14 +68,14 @@ class PreferenceMatcher(ABC):
 class MBTIMatcher(PreferenceMatcher):
     """MBTI偏好匹配器"""
     
-    def _get_data_file_path(self) -> str:
-        return os.path.join('data', 'json', 'mbti_pool.json')
+    def _get_pool_name(self) -> str:
+        return 'mbti'
         
     def calculate_preference_score(self, source_mbti: str, target_mbti: str) -> float:
         """计算MBTI偏好匹配分数"""
         # 在MBTI池中查找源MBTI类型
         source_data = next(
-            (item for item in self.preference_data['mbti_types'] 
+            (item for item in self.preference_data.get('mbti_types', [])
              if item['自身mbti'] == source_mbti),
             None
         )
@@ -82,7 +84,7 @@ class MBTIMatcher(PreferenceMatcher):
             return 0.0
             
         # 获取目标MBTI的偏好分数
-        preference_score = source_data['偏好mbti'].get(target_mbti, 0)
+        preference_score = source_data.get('偏好mbti', {}).get(target_mbti, 0)
         
         # 将分数标准化到[0,1]区间
         return preference_score / 10.0 if preference_score > 0 else 0.0
@@ -90,14 +92,14 @@ class MBTIMatcher(PreferenceMatcher):
 class ZodiacMatcher(PreferenceMatcher):
     """星座偏好匹配器"""
     
-    def _get_data_file_path(self) -> str:
-        return os.path.join('data', 'json', 'constellation_pool.json')
+    def _get_pool_name(self) -> str:
+        return 'constellation'
         
     def calculate_preference_score(self, source_zodiac: str, target_zodiac: str) -> float:
         """计算星座偏好匹配分数"""
         # 在星座池中查找源星座
         source_data = next(
-            (item for item in self.preference_data['constellation_types'] 
+            (item for item in self.preference_data.get('constellation_types', [])
              if item['自身星座'] == source_zodiac),
             None
         )
@@ -106,7 +108,7 @@ class ZodiacMatcher(PreferenceMatcher):
             return 0.0
             
         # 获取目标星座的偏好分数
-        preference_score = source_data['偏好星座'].get(target_zodiac, 0)
+        preference_score = source_data.get('偏好星座', {}).get(target_zodiac, 0)
         
         # 将分数标准化到[0,1]区间
         return preference_score / 10.0 if preference_score > 0 else 0.0 

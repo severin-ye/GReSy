@@ -3,10 +3,10 @@
 处理简单的二元匹配逻辑，如在线状态和服务器匹配
 """
 
-import json
 import os
 from typing import Dict, List, Tuple, Set
 from models.user_profile import UserProfile
+from utils.loaders import PoolsLoader
 
 class BaseMatcher:
     """基础匹配器
@@ -17,16 +17,9 @@ class BaseMatcher:
     def __init__(self):
         """初始化基础匹配器"""
         # 从配置文件加载服务器组
-        config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 
-                                 'data', 'json', 'server_pool.json')
-        with open(config_path, 'r', encoding='utf-8') as f:
-            config = json.load(f)
-            
-        # 将列表转换为集合以提高查找效率
-        self.server_groups = {
-            group_name: set(servers)
-            for group_name, servers in config['server_groups'].items()
-        }
+        base_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'json')
+        pools_loader = PoolsLoader(base_path)
+        self.server_groups = pools_loader.load_server_groups()
         
     def match_online_status(self, user1: UserProfile, user2: UserProfile) -> bool:
         """匹配在线状态
