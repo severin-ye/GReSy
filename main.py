@@ -16,7 +16,7 @@ from datetime import datetime
 # 系统配置参数
 SYSTEM_CONFIG = {
     'debug_mode': False,                # 是否启用调试模式
-    'data_dir': 'data/json',           # 数据文件目录
+    'data_dir': 'data/input',           # 数据文件目录
     'output_dir': 'matching_results',   # 输出结果目录
     'encoding': 'utf-8-sig'            # 文件编码
 }
@@ -55,7 +55,7 @@ class MatchingSystem:
         """加载用户和游戏数据"""
         print("正在加载数据...")
         try:
-            # 获取data/json目录的绝对路径
+            # 获取data/input目录的绝对路径
             data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
                                   SYSTEM_CONFIG['data_dir'])
             

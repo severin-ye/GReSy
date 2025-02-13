@@ -30,7 +30,7 @@ class PreferenceMatcher(ABC):
         
     def _load_preference_data(self) -> Dict:
         """加载偏好数据"""
-        base_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'json')
+        base_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'input')
         pools_loader = PoolsLoader(base_path)
         
         pool_name = self._get_pool_name()

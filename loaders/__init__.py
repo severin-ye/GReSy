@@ -14,7 +14,7 @@ class LoaderManager:
     
     def __init__(self):
         """初始化加载器管理器"""
-        base_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data', 'json')
+        base_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'input')
         self.config_loader = ConfigLoader(base_path)
         self.weights_loader = WeightsLoader(base_path)
         self.pools_loader = PoolsLoader(base_path)

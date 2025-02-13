@@ -27,7 +27,7 @@ class MatchingSystem:
             games: 游戏档案列表
         """
         # 加载维度权重
-        base_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'json')
+        base_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'input')
         weights_loader = WeightsLoader(base_path)
         weights_data = weights_loader.get_weights('match_weights')
         self.dimension_weights = weights_data.get('dimension_weights', {})

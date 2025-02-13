@@ -29,7 +29,7 @@ class GameMatcher:
         
     def _load_configs(self):
         """加载配置文件"""
-        base_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'json')
+        base_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'input')
         
         # 初始化加载器
         weights_loader = WeightsLoader(base_path)
