@@ -2,7 +2,7 @@
 
 import os
 import pytest
-from utils.loaders import LoaderManager
+from loaders import LoaderManager
 
 @pytest.fixture
 def loader_manager(tmp_path):

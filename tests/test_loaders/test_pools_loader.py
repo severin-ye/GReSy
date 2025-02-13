@@ -2,7 +2,7 @@
 
 import os
 import pytest
-from utils.loaders.pools_loader import PoolsLoader
+from loaders.pools_loader import PoolsLoader
 
 @pytest.fixture
 def pools_loader(tmp_path):

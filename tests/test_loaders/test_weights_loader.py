@@ -2,7 +2,7 @@
 
 import os
 import pytest
-from utils.loaders.weights_loader import WeightsLoader
+from loaders.weights_loader import WeightsLoader
 
 @pytest.fixture
 def weights_loader(tmp_path):

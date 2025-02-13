@@ -12,7 +12,7 @@ from matching.numeric_matcher import NumericMatcher
 from matching.preference_matcher import PreferenceMatcher, MBTIMatcher, ZodiacMatcher
 from matching.ordered_matcher import OrderedMatcher
 from matching.game_matcher import GameMatcher
-from utils.loaders import WeightsLoader
+from loaders import WeightsLoader
 
 class MatchingSystem:
     """综合匹配系统

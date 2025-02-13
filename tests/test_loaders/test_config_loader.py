@@ -2,7 +2,7 @@
 
 import os
 import pytest
-from utils.loaders.config_loader import ConfigLoader
+from loaders.config_loader import ConfigLoader
 
 @pytest.fixture
 def config_loader(tmp_path):

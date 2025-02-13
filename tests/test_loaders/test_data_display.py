@@ -14,7 +14,7 @@ pytest tests/test_loaders/test_data_display.py::test_display_pools_data -v -s
 
 import json
 import pytest
-from utils.loaders import loader_manager
+from loaders import loader_manager
 
 def _format_json(data):
     """格式化JSON数据为易读的字符串

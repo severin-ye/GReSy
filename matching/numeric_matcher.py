@@ -6,7 +6,7 @@
 import os
 from typing import Dict
 from models.user_profile import UserProfile
-from utils.loaders import WeightsLoader, ConfigLoader
+from loaders import WeightsLoader, ConfigLoader
 
 class NumericMatcher:
     """数值相似度匹配器

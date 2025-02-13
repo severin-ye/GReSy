@@ -10,7 +10,7 @@ import os
 from typing import Dict, List, Set, Tuple
 from models.user_profile import UserProfile
 from models.game_profile import GameProfile
-from utils.loaders import ConfigLoader, WeightsLoader
+from loaders import ConfigLoader, WeightsLoader
 
 class GameMatcher:
     """游戏多维度匹配器

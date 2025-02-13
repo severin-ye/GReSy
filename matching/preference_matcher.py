@@ -6,7 +6,7 @@
 from abc import ABC, abstractmethod
 from typing import Dict
 import os
-from utils.loaders import PoolsLoader
+from loaders import PoolsLoader
 
 class PreferenceMatcher(ABC):
     """偏好匹配基类
