@@ -21,7 +21,7 @@ class PoolsLoader:
         Args:
             base_path: 基础路径
         """
-        self.pools_path = os.path.join(base_path, 'pools')
+        self.pools_path = os.path.join(base_path, 'pools')  # 从pools子目录加载数据
         self.pools = {}
         self._load_pools()
         

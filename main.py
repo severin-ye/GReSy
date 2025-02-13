@@ -6,8 +6,8 @@
 import os
 import sys
 from typing import List, Tuple, Dict
-from matching.matcher import UserMatcher
-from utils.data_loaders import DataLoader
+from matching.matching_system import MatchingSystem
+from loaders import LoaderManager
 from models.user_profile import UserProfile
 from models.game_profile import GameProfile
 import pandas as pd
@@ -37,8 +37,8 @@ MATCHING_CONFIG = {
     'min_similarity_threshold': 0.3 # 最小相似度阈值
 }
 
-class MatchingSystem:
-    """匹配系统类，封装主要的匹配功能和交互逻辑"""
+class MatchingApp:
+    """匹配系统应用类，封装主要的匹配功能和交互逻辑"""
     
     def __init__(self, debug_mode: bool = SYSTEM_CONFIG['debug_mode']):
         """初始化匹配系统
@@ -46,10 +46,10 @@ class MatchingSystem:
         Args:
             debug_mode: 是否启用调试模式
         """
-        self.matcher = UserMatcher(debug_mode=debug_mode)
         self.users: List[UserProfile] = []
         self.games: List[GameProfile] = []
         self.debug_mode = debug_mode
+        self.matcher = None  # 延迟初始化匹配器，等待游戏数据加载完成
         
     def load_data(self) -> None:
         """加载用户和游戏数据"""
@@ -59,13 +59,16 @@ class MatchingSystem:
             data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
                                   SYSTEM_CONFIG['data_dir'])
             
-            # 加载用户和游戏数据
-            self.users = DataLoader.load_user_pool(os.path.join(data_dir, "user_pool.json"))
-            self.games = DataLoader.load_game_pool(os.path.join(data_dir, "game_pool.json"))
+            # 初始化加载器管理器
+            loader = LoaderManager()
+            pools_loader = loader.pools_loader
             
-            # 将用户添加到匹配器
-            for user in self.users:
-                self.matcher.add_user(user)
+            # 加载用户和游戏数据
+            self.users = pools_loader.load_user_pool()
+            self.games = pools_loader.load_game_pool()
+            
+            # 初始化匹配器
+            self.matcher = MatchingSystem(self.games)
                 
             print(f"成功加载 {len(self.users)} 个用户和 {len(self.games)} 个游戏")
             
@@ -148,14 +151,14 @@ class MatchingSystem:
             ("游戏", lambda u: ", ".join(u.games) + 
                 (f", {recommended_games[0][0]}(推荐度: {recommended_games[0][1]*100:.2f}%)" 
                  if u == target_user and recommended_games else ""), None),
-            ("游戏时间", "play_time", "play_time"),
-            ("游戏区服", "play_region", "play_region"),
+            ("游戏时间", "play_time", "time"),
+            ("游戏区服", "play_region", "server"),
             ("MBTI", "mbti", "mbti"),
             ("星座", "zodiac", "zodiac"),
-            ("游戏经验", "game_experience", "game_experience"),
+            ("游戏经验", "game_experience", "experience"),
             ("在线状态", "online_status", "online_status"),
-            ("游戏风格", "game_style", "game_style"),
-            ("游戏类型", lambda u: get_user_game_types(u), "game_similarity")
+            ("游戏风格", "game_style", "style"),
+            ("游戏类型", lambda u: get_user_game_types(u), "game_type")
         ]
         
         # 使用配置的列宽
@@ -185,7 +188,7 @@ class MatchingSystem:
             # 获取贡献度值
             if contrib_key:
                 contrib = contributions.get(contrib_key, 0)
-                contribution_values.append(f"{contrib:.1f}%")
+                contribution_values.append(f"{contrib*100:.1f}%")  # 将分数转换为百分比并添加%
             else:
                 contribution_values.append("-")
                 
@@ -193,7 +196,7 @@ class MatchingSystem:
         features.append(("总匹配度", None, None))
         user1_values.append("-")
         user2_values.append("-")
-        contribution_values.append(f"{similarity*100:.1f}%")
+        contribution_values.append(f"{similarity*100:.1f}%")  # 将分数转换为百分比并添加%
         
         # 计算分隔线长度
         total_width = label_width + value_width * 2 + contrib_width
@@ -255,12 +258,12 @@ class MatchingSystem:
                 result = {
                     '目标用户ID': target_user.user_id,
                     '匹配用户ID': user.user_id,
-                    '总匹配度': f"{similarity:.2%}",
-                    '时间匹配': f"{contributions.get('play_time', 0):.2f}%",
-                    '区服匹配': f"{contributions.get('play_region', 0):.2f}%",
-                    '游戏相似度': f"{contributions.get('game_similarity', 0):.2f}%",
-                    'MBTI匹配': f"{contributions.get('mbti', 0):.2f}%",
-                    '游戏风格匹配': f"{contributions.get('game_style', 0):.2f}%"
+                    '总匹配度': f"{similarity*100:.1f}%",
+                    '时间匹配': f"{contributions.get('time', 0)*100:.1f}%",
+                    '区服匹配': f"{contributions.get('server', 0)*100:.1f}%",
+                    '游戏相似度': f"{contributions.get('game_type', 0)*100:.1f}%",
+                    'MBTI匹配': f"{contributions.get('mbti', 0)*100:.1f}%",
+                    '游戏风格匹配': f"{contributions.get('style', 0)*100:.1f}%"
                 }
                 results.append(result)
                 
@@ -302,36 +305,37 @@ class MatchingSystem:
                 # 获取目标用户并执行匹配
                 target_user = self.users[user_index - 1]
                 print("\n正在执行匹配...")
-                matches = self.matcher.find_matches(target_user, self.games, 
-                                                  top_n=MATCHING_CONFIG['default_top_n'])
+                matches = self.matcher.find_best_matches(
+                    target_user, 
+                    self.users,
+                    top_n=MATCHING_CONFIG['default_top_n']
+                )
                 
                 if not matches:
                     print("\n未找到匹配的用户。")
                     continue
                     
-                # 获取推荐游戏
-                recommended_games = []
-                if matches[0][3]:  # 如果有推荐游戏
-                    recommended_games = matches[0][3][:MATCHING_CONFIG['max_recommended_games']]
-                    
                 # 显示匹配结果
                 print(f"\n找到 {len(matches)} 个匹配结果，显示匹配度最高的 {MATCHING_CONFIG['default_top_n']} 个：")
                 
                 # 显示匹配结果
-                for matched_user, similarity, contributions, _ in matches:
+                for matched_user, match_scores in matches:
                     self.print_user_comparison(
                         target_user,
                         matched_user,
-                        similarity,
-                        contributions,
-                        recommended_games
+                        match_scores['total_score'],
+                        match_scores,
+                        None  # 新版本不支持游戏推荐
                     )
                     print("\n" + DISPLAY_CONFIG['separator_char'] * DISPLAY_CONFIG['separator_length'])
                 
                 # 询问是否保存结果
                 print("\n是否要保存匹配结果到CSV文件？(y/n)")
                 if input().strip().lower() == 'y':
-                    self.save_results(matches, target_user)
+                    self.save_results(
+                        [(user, scores['total_score'], scores, None) for user, scores in matches],
+                        target_user
+                    )
                     
             except ValueError:
                 print("输入错误：请输入有效的数字！")
@@ -344,7 +348,7 @@ def main():
     """主函数"""
     try:
         # 创建并运行匹配系统
-        system = MatchingSystem(debug_mode=SYSTEM_CONFIG['debug_mode'])
+        system = MatchingApp(debug_mode=SYSTEM_CONFIG['debug_mode'])
         system.run()
     except KeyboardInterrupt:
         print("\n程序被用户中断")

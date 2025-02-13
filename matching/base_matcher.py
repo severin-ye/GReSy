@@ -17,7 +17,7 @@ class BaseMatcher:
     def __init__(self):
         """初始化基础匹配器"""
         # 从配置文件加载服务器组
-        base_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'json')
+        base_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'input')
         pools_loader = PoolsLoader(base_path)
         self.server_groups = pools_loader.load_server_groups()
         
