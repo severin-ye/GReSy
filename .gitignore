@@ -18,3 +18,6 @@ Thumbs.db
 
 # 忽略 Cursor IDE 规则文件
 .cursor/rules/
+
+# 忽略包含API keys的文件
+**/key.py

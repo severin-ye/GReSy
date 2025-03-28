@@ -1,17 +1,17 @@
-
 from openai import OpenAI  
 import numpy as np  
 import os  
 from sklearn.preprocessing import MultiLabelBinarizer  # 导入用于特征编码的工具
 from sklearn.metrics.pairwise import cosine_similarity  # 导入用于计算余弦相似度的函数
+from key import OPENAI_API_KEY, ALIYUN_API_KEY, ALIYUN_BASE_URL
 
 # 配置OpenAI客户端
-# client = OpenAI(api_key='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')
+# client = OpenAI(api_key=OPENAI_API_KEY)
 
 # 配置阿里云通义千问API
 client = OpenAI(
-    api_key='sk-dc461f4200d1491abf8b8dba20e5bc38',
-    base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"  # 阿里云通义千问的API地址
+    api_key=ALIYUN_API_KEY,
+    base_url=ALIYUN_BASE_URL  # 阿里云通义千问的API地址
 )
 
 # 测试API连接
