@@ -1,95 +1,87 @@
 # GReSy (Game Recommendation System)
 
-GReSy 是一个智能游戏玩家匹配推荐系统，通过分析用户的游戏偏好、个人特征和游戏习惯等多个维度，为用户推荐最合适的游戏伙伴。
+GReSy is an intelligent game player matching recommendation system that recommends the most suitable gaming partners by analyzing multiple dimensions of user preferences, personal characteristics, and gaming habits.
 
-## 功能特性
+## Features
 
-- 🎮 多维度特征匹配
-  - 游戏偏好匹配
-  - 性别特征匹配
-  - 游戏区服匹配
-  - 游戏时间匹配
-  - MBTI性格匹配
-  - 游戏经验匹配
-  - 游戏风格匹配
-  - 星座匹配
-  - 在线状态匹配
+- 🎮 Multi-dimensional Feature Matching
+  - Game Preference Matching
+  - Gender Feature Matching
+  - Game Server Matching
+  - Gaming Time Matching
+  - MBTI Personality Matching
+  - Gaming Experience Matching
+  - Gaming Style Matching
+  - Constellation Matching
+  - Online Status Matching
 
-- 📊 智能权重分配
-  - 游戏偏好：80%
-  - 性别特征：20%
-  - 游戏区服：15%
-  - 游戏时间：10%
-  - MBTI性格：7.5%
-  - 游戏经验：7.5%
-  - 游戏风格：5%
-  - 星座：2.5%
-  - 在线状态：2.5%
+- 📊 Smart Weight Distribution
+  - Game Preferences: 80%
+  - Gender Features: 20%
+  - Game Servers: 15%
+  - Gaming Time: 10%
+  - MBTI Personality: 7.5%
+  - Gaming Experience: 7.5%
+  - Gaming Style: 5%
+  - Constellation: 2.5%
+  - Online Status: 2.5%
 
-- 🔍 精确匹配算法
-  - 基础匹配模块
-  - 数值相似度匹配
-  - 偏好列表匹配
-  - 多维度综合匹配
+- 🔍 Precise Matching Algorithm
+  - Basic Matching Module
+  - Numerical Similarity Matching
+  - Preference List Matching
+  - Multi-dimensional Comprehensive Matching
 
-## 安装说明
+## Installation
 
-1. 克隆项目
+1. Clone the project
 ```bash
-git clone [项目地址]
+git clone [project-url]
 cd GReSy
 ```
 
-2. 创建并激活虚拟环境
+2. Create and activate virtual environment
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # Linux/Mac
-# 或
+# or
 .venv\Scripts\activate  # Windows
 ```
 
-3. 安装依赖
+3. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-## 使用方法
+## Usage
 
-1. 准备数据
-   - 在 `data/pools` 目录下准备以下数据文件：
-     - `user_pool.json`：用户数据
-     - `game_pool.json`：游戏数据
-     - `mbti_pool.json`：MBTI性格数据
-     - `constellation_pool.json`：星座数据
-     - `server_pool.json`：服务器数据
+1. Prepare Data
+   - Prepare the following data files in the `data/pools` directory:
+     - `user_pool.json`: User data
+     - `game_pool.json`: Game data
+     - `mbti_pool.json`: MBTI personality data
+     - `constellation_pool.json`: Constellation data
+     - `server_pool.json`: Server data
 
-2. 运行系统
+2. Run the system
 ```bash
 python main.py
 ```
 
-## 项目结构
+## Project Structure
 
 ```
 GReSy/
-├── data/               # 数据目录
-├── loaders/           # 数据加载模块
-├── matching/          # 匹配算法模块
-├── models/           # 数据模型
-├── tests/            # 测试用例
-├── main.py           # 主程序入口
-└── requirements.txt  # 项目依赖
+├── data/               # Data directory
+├── loaders/           # Data loading modules
+├── matching/          # Matching algorithm modules
+├── models/           # Data models
+├── tests/            # Test cases
+├── main.py           # Main program entry
+└── requirements.txt  # Project dependencies
 ```
 
-## 文档
+## Documentation
 
-- [系统结构说明](doc_Structure_Description.md)
-- [更新日志](doc_log.md)
-
-## 许可证
-
-[待补充]
-
-## 贡献指南
-
-[待补充] 
+- [System Structure Description](doc_Structure_Description.md)
+- [Update Log](doc_log.md)
