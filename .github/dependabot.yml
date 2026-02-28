@@ -1,0 +1,17 @@
+version: 2
+updates:
+  # 1. 启用 Python (pip) 依赖的自动更新
+  - package-ecosystem: "pip"
+    directory: "/"           # requirements.txt 所在目录
+    schedule:
+      interval: "weekly"     # 每周检查一次（避免频繁打扰）
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "security"
+
+  # 2. GitHub Actions 工作流依赖自动更新
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
