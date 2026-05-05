@@ -14,8 +14,8 @@ from matching.preference_matcher import PreferenceMatcher, MBTIMatcher, ZodiacMa
 class MockPreferenceMatcher(PreferenceMatcher):
     """用于测试的模拟偏好匹配器"""
     
-    def _get_data_file_path(self) -> str:
-        return "mock_path.json"
+    def _get_pool_name(self) -> str:
+        return 'mbti'
         
     def calculate_preference_score(self, source_value: str, target_value: str) -> float:
         return 0.5 if source_value == target_value else 0.0
