@@ -23,4 +23,9 @@ Thumbs.db
 
 # 忽略包含API keys的文件
 **/key.py
+
+# 忽略构建产物
+*.egg-info/
+dist/
+build/
 *:Zone.Identifier
