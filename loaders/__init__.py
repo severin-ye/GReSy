@@ -14,10 +14,14 @@ class LoaderManager:
     
     def __init__(self):
         """初始化加载器管理器"""
-        base_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'input')
+        base_path = self._get_base_path()
         self.config_loader = ConfigLoader(base_path)
         self.weights_loader = WeightsLoader(base_path)
         self.pools_loader = PoolsLoader(base_path)
+        
+    def _get_base_path(self) -> str:
+        """获取数据基础路径，子类可覆盖以使用自定义路径"""
+        return os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'input')
         
     def get_config(self, config_name: str) -> Dict[str, Any]:
         """获取系统配置
